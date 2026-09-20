@@ -1,6 +1,6 @@
 {
   "name": "@daformat/audio-borealis",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "Zero-Clause BSD",
   "description": "audio-borealis, a zero-dependency library that paints a sound-reactive glow along the edge of any box with plain Canvas 2D. Lifted out of the Subtitles app for macOS.",
   "keywords": [

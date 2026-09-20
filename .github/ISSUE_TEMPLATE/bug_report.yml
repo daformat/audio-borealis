@@ -1,0 +1,61 @@
+name: Bug report
+description: Something isn't working as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill out the sections below as completely as you can — the more detail you provide, the faster we can triage and fix it.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+      placeholder: "When I do X, Y happens instead of Z."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: The options you attached with, what fed the glow (a source, feed() calls, the mock voice), and what it drew. A frame from `borealis.frame` is usually enough to pin the driver down.
+      placeholder: |
+        attachBorealis(box, { look: "autumn", source: () => voice.read(dt, true) })
+        // expected the glow to rise, got a blank canvas
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen, and what makes you expect it?
+    validations:
+      required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: runtime
+    attributes:
+      label: Browser
+      description: Which browser and version, and on what. The painter uses only 2D canvas calls, so a difference between engines is a bug.
+      placeholder: "Safari 26.0 on macOS"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that might help — screenshots, related issues, etc.
+    validations:
+      required: false

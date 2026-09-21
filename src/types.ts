@@ -3,9 +3,10 @@ export type Rgb = [r: number, g: number, b: number];
 
 /**
  * Where the colors come from: shares of the hue wheel between `hueStart` and
- * `hueStart + hueWidth`, or one tone alone.
+ * `hueStart + hueWidth`; the box's counter-color, white on a dark box and a
+ * blue-leaning gray on a light one; or white or black alone.
  */
-export type ColorMode = "spectrum" | "white" | "black";
+export type ColorMode = "spectrum" | "monochrome" | "white" | "black";
 
 /** How the hills lay over the lobes: painted over them, or added to them. */
 export type CurveBlend = "normal" | "additive";
@@ -128,8 +129,13 @@ export type BorealisFrame = {
   lobeAmplitude: number[];
 };
 
-/** The looks the app's menu offers. */
-export type LookName = "rainbow" | "northernLights" | "autumn" | "whiteHaze";
+/**
+ * The looks the app's menu offers. `whiteHaze` is the old name of what the
+ * menu now calls `monochromeHaze`, kept so a caller who has it goes on
+ * working: it is white alone, where the monochrome haze follows the box.
+ */
+export type LookName =
+  "rainbow" | "northernLights" | "autumn" | "monochromeHaze" | "whiteHaze";
 
 /** A look of your own: a color mode and, for a spectrum, where on the wheel it sits. */
 export type Look = Pick<BorealisConfig, "colorMode"> &

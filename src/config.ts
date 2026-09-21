@@ -98,8 +98,23 @@ export const LOOKS: Record<LookName, Look> = {
   rainbow: { colorMode: "spectrum", hueStart: 0, hueWidth: 360 },
   northernLights: { colorMode: "spectrum", hueStart: 100, hueWidth: 180 },
   autumn: { colorMode: "spectrum", hueStart: 310, hueWidth: 90 },
+  // The opposite of the box's color: white on a dark box, a blue-leaning
+  // gray on a light one, read off the box where it is painted.
+  monochromeHaze: { colorMode: "monochrome" },
+  /** @deprecated The menu's old name for the haze: white alone. */
   whiteHaze: { colorMode: "white" },
 };
+
+/**
+ * The monochrome haze's color for a box whose type is `type`, in 0..1: the
+ * box's counter-color, white where the type is light, and where it is dark
+ * a 65% gray leaning blue, #475975, as the app's painter has it (black reads
+ * as a stain, a neutral gray as concrete).
+ */
+export const inkFor = (type: Rgb): Rgb =>
+  type[0] * 0.299 + type[1] * 0.587 + type[2] * 0.114 > 0.5
+    ? [1, 1, 1]
+    : [0.28, 0.35, 0.46];
 
 /** The strengths the app's menu offers: the whole effect's opacity. */
 export const STRENGTHS: Record<StrengthName, number> = {
@@ -138,13 +153,19 @@ export const applyLook = (
 
 /**
  * The `index`th of the seven colors: its share of the wheel from `hueStart`,
- * turned by `drift` degrees, at `saturation`; or white or black alone.
+ * turned by `drift` degrees, at `saturation`; or, monochrome, `ink`, the
+ * box's counter-color, white unless the box says otherwise; or white or
+ * black alone.
  */
 export const color = (
   index: number,
   config: BorealisConfig,
   drift: number,
+  ink?: Rgb | null,
 ): Rgb => {
+  if (config.colorMode === "monochrome") {
+    return ink ?? [1, 1, 1];
+  }
   if (config.colorMode === "white") {
     return [1, 1, 1];
   }

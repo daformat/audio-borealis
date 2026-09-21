@@ -15,6 +15,7 @@ export {
   color,
   defaults,
   HUE_SHARES,
+  inkFor,
   LOBE_SPAN,
   LOBES,
   LOOKS,

@@ -133,8 +133,10 @@ enough to drive it.
 ### Looks and strengths
 
 The four looks are the app's menu: `rainbow` takes the whole wheel, `northernLights` the green-to-violet half,
-`autumn` a quarter from magenta round to orange, and `whiteHaze` is white alone. A look of your own is a color mode and
-where on the wheel it sits:
+`autumn` a quarter from magenta round to orange, and `monochromeHaze` is the box's counter-color, white on a dark box
+and a blue-leaning gray on a light one, read off the box's own type color each frame so it follows the theme wherever
+the theme comes from. `whiteHaze`, the old name, is white alone and stays for a caller who has it. A look of your own
+is a color mode and where on the wheel it sits:
 
 ```ts
 attachBorealis(box, {
@@ -224,7 +226,8 @@ filled without a seam.
 Seven shares of the wheel, `[0.94, 0.56, 0.76, 0.40, 0.08, 0.65, 0.49]`, shuffled so that neighbors contrast, spread
 over `hueWidth` degrees from `hueStart`. The hills take the first ones, low band to high. The whole set drifts
 `hueRange` degrees either side of where it started, out and back over `hueDuration` seconds on a cosine, so the colors
-are never quite the same twice and never jump.
+are never quite the same twice and never jump. The monochrome haze takes none of this: its one color is the box's
+counter-color, `inkFor` of the box's type color, white on a dark box and a 65% gray leaning blue on a light one.
 
 ### The painter
 
@@ -253,18 +256,19 @@ speech, so every sentence is said the same way, to the same peak.
 
 The glow on an element. Returns a `Borealis`.
 
-| Option          | Type                           | Default     | What it does                                                                     |
-| --------------- | ------------------------------ | ----------- | -------------------------------------------------------------------------------- |
-| `source`        | `(dt, time) => Levels \| null` |             | The levels each frame. Leave it out to push them with `feed()`.                  |
-| `look`          | `LookName \| Look`             | `"rainbow"` | Where the colors come from.                                                      |
-| `strength`      | `StrengthName \| number`       | `"medium"`  | The whole effect's opacity.                                                      |
-| `config`        | `Partial<BorealisConfig>`      |             | Any knobs, over the app's defaults and under the look and strength.              |
-| `scaleY`        | `number`                       | `1`         | An extra vertical factor, for a box drawn smaller than its type would have it.   |
-| `maxPixelRatio` | `number`                       | `3`         | The most device pixels per CSS px the canvas is drawn at.                        |
-| `onScreenOnly`  | `boolean`                      | `true`      | Run only while the element is on screen.                                         |
-| `feedHold`      | `number`                       | `120`       | Milliseconds a fed reading holds before it counts as silence.                    |
-| `canvas`        | `HTMLCanvasElement`            |             | A canvas of your own, placed as you like, instead of one laid under the content. |
-| `className`     | `string`                       |             | A class for the canvas that is made.                                             |
+| Option          | Type                           | Default     | What it does                                                                       |
+| --------------- | ------------------------------ | ----------- | ---------------------------------------------------------------------------------- |
+| `source`        | `(dt, time) => Levels \| null` |             | The levels each frame. Leave it out to push them with `feed()`.                    |
+| `look`          | `LookName \| Look`             | `"rainbow"` | Where the colors come from.                                                        |
+| `strength`      | `StrengthName \| number`       | `"medium"`  | The whole effect's opacity.                                                        |
+| `config`        | `Partial<BorealisConfig>`      |             | Any knobs, over the app's defaults and under the look and strength.                |
+| `scaleY`        | `number`                       | `1`         | An extra vertical factor, for a box drawn smaller than its type would have it.     |
+| `ink`           | `Rgb`                          | the type's  | The monochrome haze's color, instead of the one read off the element's type color. |
+| `maxPixelRatio` | `number`                       | `3`         | The most device pixels per CSS px the canvas is drawn at.                          |
+| `onScreenOnly`  | `boolean`                      | `true`      | Run only while the element is on screen.                                           |
+| `feedHold`      | `number`                       | `120`       | Milliseconds a fed reading holds before it counts as silence.                      |
+| `canvas`        | `HTMLCanvasElement`            |             | A canvas of your own, placed as you like, instead of one laid under the content.   |
+| `className`     | `string`                       |             | A class for the canvas that is made.                                               |
 
 ```ts
 type Borealis = {
@@ -316,7 +320,7 @@ type Levels = {
 ### `paintFrame(ctx, scratch, frame, box)`
 
 A frame onto a 2D context. `scratch` is a second canvas of the same size the masked layers are built on, `box` is
-`{ width, height, radius, fontSize, scaleY? }` in CSS px, and the context is expected to carry the device pixel ratio
+`{ width, height, radius, fontSize, scaleY?, ink? }` in CSS px, and the context is expected to carry the device pixel ratio
 as its transform. `isBlank(frame)` tells you whether there is anything to paint.
 
 ### `curves(frame, width, height, scaleX, scaleY, samples?)`
@@ -339,46 +343,46 @@ per hill. `curveOffset` and `curveBand` are the placement rules on their own.
 
 `defaults()` returns a fresh `BorealisConfig` at the app's values.
 
-| Knob               | Default      | What it does                                                                  |
-| ------------------ | ------------ | ----------------------------------------------------------------------------- |
-| `sensitivity`      | `3`          | Gain on the loudness, over a base gain of 5.                                  |
-| `threshold`        | `0.06`       | The noise gate, on the gained loudness.                                       |
-| `curve`            | `0.6`        | The rise's curve: below 1 the glow comes up fast and then eases.              |
-| `autoGain`         | `true`       | Scale every level to its own running peak.                                    |
-| `autoGainFloor`    | `0.3`        | The lowest the running peak may fall.                                         |
-| `autoGainRelease`  | `4`          | Seconds for the running peak to decay.                                        |
-| `attack`           | `0.05`       | Seconds to rise toward a louder target.                                       |
-| `release`          | `0.2`        | Seconds to fall toward a quieter one. The bands take 1.15 times this.         |
-| `idle`             | `0`          | How much the glow breathes on its own in silence.                             |
-| `breatheDuration`  | `5.2`        | Seconds per breath.                                                           |
-| `reach`            | `1.7`        | The glow's height at full rise.                                               |
-| `spread`           | `1.05`       | How much wider the glow gets at full rise, over a base of 0.85.               |
-| `flow`             | `60`         | How fast the lobes slide while a voice is heard, in points a second.          |
-| `lobeSpacing`      | `0.85`       | How far apart the lobes sit, 1 for the app's spacing.                         |
-| `hueRange`         | `24`         | How far the hue drifts either side of where it started, in degrees.           |
-| `hueDuration`      | `12`         | Seconds for the hue to drift out and back.                                    |
-| `hueStart`         | `0`          | Where the colors' share of the wheel begins, in degrees.                      |
-| `hueWidth`         | `360`        | How much of the wheel the seven colors share.                                 |
-| `saturation`       | `0.85`       | The colors' saturation.                                                       |
-| `colorMode`        | `"spectrum"` | `"spectrum"`, `"white"` or `"black"`.                                         |
-| `opacity`          | `0.5`        | The whole effect's opacity. The strengths set this.                           |
-| `glowOpacity`      | `1`          | The lobes' own opacity, under `opacity`. 0 leaves the hills alone.            |
-| `bend`             | `60`         | How far the glow is lifted at full rise, in points.                           |
-| `curveCount`       | `5`          | How many hills stand over the lobes.                                          |
-| `curveOpacity`     | `0.2`        | The hills' fill, at the bottom edge.                                          |
-| `curveEdge`        | `0.35`       | The line along each hill's crest.                                             |
-| `curveFade`        | `0.35`       | How much of the fill is left at the crest.                                    |
-| `curveBlend`       | `"normal"`   | `"normal"` paints the hills over the lobes, `"additive"` adds them.           |
-| `curvePosition`    | `0.25`       | How high the hills stand against the lobes' height.                           |
-| `curveCeiling`     | `0.55`       | The most of the box's height a hill may take.                                 |
-| `curveBase`        | `0`          | How much the hills' base lifts with the glow.                                 |
-| `curveOffset`      | `-1.5`       | Where the hills' base sits against the bottom edge, in points.                |
-| `curveShape`       | `1.75`       | The hills' profile: 2 is a bell, higher is flatter on top.                    |
-| `curveSpread`      | `0.87`       | How wide each hill's bell is over its half width.                             |
-| `curveSpan`        | `0.5`        | How far from the center the outermost hills rest, as a share of the width.    |
-| `curveWidthCentre` | `0.55`       | A center hill's half width, as a share of the box's width.                    |
-| `curveWidthEdge`   | `0.32`       | An outermost hill's half width, as a share of the box's width.                |
-| `curveWander`      | `0.084`      | How far the hills wander sideways as the lobes flow, as a share of the width. |
+| Knob               | Default      | What it does                                                                               |
+| ------------------ | ------------ | ------------------------------------------------------------------------------------------ |
+| `sensitivity`      | `3`          | Gain on the loudness, over a base gain of 5.                                               |
+| `threshold`        | `0.06`       | The noise gate, on the gained loudness.                                                    |
+| `curve`            | `0.6`        | The rise's curve: below 1 the glow comes up fast and then eases.                           |
+| `autoGain`         | `true`       | Scale every level to its own running peak.                                                 |
+| `autoGainFloor`    | `0.3`        | The lowest the running peak may fall.                                                      |
+| `autoGainRelease`  | `4`          | Seconds for the running peak to decay.                                                     |
+| `attack`           | `0.05`       | Seconds to rise toward a louder target.                                                    |
+| `release`          | `0.2`        | Seconds to fall toward a quieter one. The bands take 1.15 times this.                      |
+| `idle`             | `0`          | How much the glow breathes on its own in silence.                                          |
+| `breatheDuration`  | `5.2`        | Seconds per breath.                                                                        |
+| `reach`            | `1.7`        | The glow's height at full rise.                                                            |
+| `spread`           | `1.05`       | How much wider the glow gets at full rise, over a base of 0.85.                            |
+| `flow`             | `60`         | How fast the lobes slide while a voice is heard, in points a second.                       |
+| `lobeSpacing`      | `0.85`       | How far apart the lobes sit, 1 for the app's spacing.                                      |
+| `hueRange`         | `24`         | How far the hue drifts either side of where it started, in degrees.                        |
+| `hueDuration`      | `12`         | Seconds for the hue to drift out and back.                                                 |
+| `hueStart`         | `0`          | Where the colors' share of the wheel begins, in degrees.                                   |
+| `hueWidth`         | `360`        | How much of the wheel the seven colors share.                                              |
+| `saturation`       | `0.85`       | The colors' saturation.                                                                    |
+| `colorMode`        | `"spectrum"` | `"spectrum"`, `"monochrome"` (the box's counter-color, see `ink`), `"white"` or `"black"`. |
+| `opacity`          | `0.5`        | The whole effect's opacity. The strengths set this.                                        |
+| `glowOpacity`      | `1`          | The lobes' own opacity, under `opacity`. 0 leaves the hills alone.                         |
+| `bend`             | `60`         | How far the glow is lifted at full rise, in points.                                        |
+| `curveCount`       | `5`          | How many hills stand over the lobes.                                                       |
+| `curveOpacity`     | `0.2`        | The hills' fill, at the bottom edge.                                                       |
+| `curveEdge`        | `0.35`       | The line along each hill's crest.                                                          |
+| `curveFade`        | `0.35`       | How much of the fill is left at the crest.                                                 |
+| `curveBlend`       | `"normal"`   | `"normal"` paints the hills over the lobes, `"additive"` adds them.                        |
+| `curvePosition`    | `0.25`       | How high the hills stand against the lobes' height.                                        |
+| `curveCeiling`     | `0.55`       | The most of the box's height a hill may take.                                              |
+| `curveBase`        | `0`          | How much the hills' base lifts with the glow.                                              |
+| `curveOffset`      | `-1.5`       | Where the hills' base sits against the bottom edge, in points.                             |
+| `curveShape`       | `1.75`       | The hills' profile: 2 is a bell, higher is flatter on top.                                 |
+| `curveSpread`      | `0.87`       | How wide each hill's bell is over its half width.                                          |
+| `curveSpan`        | `0.5`        | How far from the center the outermost hills rest, as a share of the width.                 |
+| `curveWidthCentre` | `0.55`       | A center hill's half width, as a share of the box's width.                                 |
+| `curveWidthEdge`   | `0.32`       | An outermost hill's half width, as a share of the box's width.                             |
+| `curveWander`      | `0.084`      | How far the hills wander sideways as the lobes flow, as a share of the width.              |
 
 ### Types
 

@@ -8,7 +8,7 @@
  * still fading. A glow with nothing to do costs nothing.
  */
 
-import { applyLook, defaults, resolveStrength } from "./config.js";
+import { applyLook, defaults, inkFor, resolveStrength } from "./config.js";
 import { createDriver, type Driver } from "./driver.js";
 import { isBlank, paintFrame } from "./painter.js";
 import type {
@@ -17,6 +17,7 @@ import type {
   Levels,
   Look,
   LookName,
+  Rgb,
   StrengthName,
 } from "./types.js";
 
@@ -38,6 +39,8 @@ export type AttachOptions = {
   config?: Partial<BorealisConfig>;
   /** See `PaintBox.scaleY`: 1 by default. */
   scaleY?: number;
+  /** The monochrome haze's color, instead of the one read off the element's own type color. */
+  ink?: Rgb;
   /** The most device pixels per CSS px the canvas is drawn at: 3 by default. */
   maxPixelRatio?: number;
   /** Run only while the element is on screen: true by default, where IntersectionObserver exists. */
@@ -212,6 +215,22 @@ export const attachBorealis = (
     }
   };
 
+  // The monochrome haze's color: the box's counter-color, read off the
+  // element's own type color each frame it is painted, so it follows the
+  // theme wherever the theme comes from. Read only when the look asks.
+  const inkOf = (): Rgb | null => {
+    if (config.colorMode !== "monochrome") {
+      return null;
+    }
+    if (options.ink) {
+      return options.ink;
+    }
+    const [r = 255, g = 255, b = 255] = (
+      getComputedStyle(element).color.match(/[\d.]+/g) ?? []
+    ).map(Number);
+    return inkFor([r / 255, g / 255, b / 255]);
+  };
+
   const draw = (frame: BorealisFrame) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) {
@@ -224,6 +243,7 @@ export const attachBorealis = (
       radius,
       fontSize,
       scaleY,
+      ink: inkOf(),
     });
   };
 

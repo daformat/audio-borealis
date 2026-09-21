@@ -67,6 +67,8 @@ export type PaintBox = {
    * last line as they do there.
    */
   scaleY?: number;
+  /** For the monochrome color mode: the box's counter-color, white if left out. */
+  ink?: Rgb | null;
 };
 
 type Stops = [at: number, alpha: number][];
@@ -261,7 +263,7 @@ export const paintFrame = (
             cy,
             lrx,
             lry,
-            color(i, c, frame.hue),
+            color(i, c, frame.hue, box.ink),
             layer.stops,
             false,
           );
@@ -295,7 +297,7 @@ export const paintFrame = (
       if (!first || !last || !points.some((p) => p[1] > 0.3)) {
         return;
       }
-      const rgb = color(k, c, frame.hue);
+      const rgb = color(k, c, frame.hue, box.ink);
       const crest = Math.max(...points.map((p) => p[1]));
       ctx.save();
       ctx.beginPath();

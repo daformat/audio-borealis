@@ -6,6 +6,7 @@ import {
   BAND_COUNT,
   color,
   defaults,
+  inkFor,
   LOBES,
   LOOKS,
   resolveStrength,
@@ -154,6 +155,9 @@ describe("config", () => {
     expect(config.colorMode).toBe("spectrum");
     expect(config.hueStart).toBe(100);
     expect(config.hueWidth).toBe(180);
+    applyLook(config, "monochromeHaze");
+    expect(config.colorMode).toBe("monochrome");
+    expect(config.hueStart).toBe(100);
     applyLook(config, "whiteHaze");
     expect(config.colorMode).toBe("white");
     expect(config.hueStart).toBe(100);
@@ -175,7 +179,7 @@ describe("config", () => {
     expect(resolveStrength(-1)).toBe(0);
   });
 
-  it("colors from the wheel, or white or black alone", () => {
+  it("colors from the wheel, the box's ink, or white or black alone", () => {
     const config = defaults();
     // The first share of a full wheel is 338.4°: a red leaning to magenta.
     const [r, g, b] = color(0, config, 0);
@@ -188,6 +192,15 @@ describe("config", () => {
     expect(color(3, config, 90)).toEqual([1, 1, 1]);
     config.colorMode = "black";
     expect(color(3, config, 90)).toEqual([0, 0, 0]);
+    // Monochrome is the ink it is given, white without one: white type on
+    // a dark box, the blue-leaning gray under dark type on a light one.
+    config.colorMode = "monochrome";
+    expect(color(3, config, 90)).toEqual([1, 1, 1]);
+    expect(color(3, config, 90, [0.28, 0.35, 0.46])).toEqual([
+      0.28, 0.35, 0.46,
+    ]);
+    expect(inkFor([1, 1, 1])).toEqual([1, 1, 1]);
+    expect(inkFor([0.24, 0.24, 0.26])).toEqual([0.28, 0.35, 0.46]);
   });
 });
 
